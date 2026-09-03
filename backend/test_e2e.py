@@ -70,10 +70,12 @@ code, client_res = request("/auth/login", method="POST", data={
 })
 client_token = client_res["token"]
 
+import time
+test_title = f"Automated CI/CD Pipeline Audit #{int(time.time())}"
 code, new_proj = request("/projects", method="POST", token=client_token, data={
-    "title": "Crypto Wallet Mobile App in React Native",
-    "description": "Looking for developer to build cross platform crypto wallet with biometric auth.",
-    "skills": "React Native, Web3, TypeScript",
+    "title": test_title,
+    "description": "Looking for DevOps expert to audit GitHub Actions pipeline and automate container security scans.",
+    "skills": "Docker, GitHub Actions, Security",
     "budget": 60000,
     "deadline": "2026-11-15",
     "experience_level": "expert",
