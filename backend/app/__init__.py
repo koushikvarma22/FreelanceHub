@@ -14,6 +14,20 @@ def create_app():
     db_url = os.getenv('DATABASE_URL')
     if not db_url:
         db_url = 'mysql+pymysql://root:password@localhost:3306/freelancehub'
+    elif db_url.startswith('postgres://'):
+        # Fix Render/Heroku postgres prefix for SQLAlchemy
+        db_url = db_url.replace('postgres://', 'postgresql://', 1)
+
+    # Pre-validate database connectivity to safely fallback to SQLite if needed
+    if not db_url.startswith('sqlite:'):
+        from sqlalchemy import create_engine
+        try:
+            test_engine = create_engine(db_url)
+            with test_engine.connect():
+                pass
+        except Exception as e:
+            print(f"Warning: Primary database connection failed ({e}). Falling back to SQLite.")
+            db_url = 'sqlite:///freelancehub.db'
 
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -51,14 +65,6 @@ def create_app():
             db.create_all()
             seed_database()
         except Exception as e:
-            print(f"Database initialization error with primary URI: {e}")
-            # If MySQL connection error, fallback gracefully to SQLite so app never crashes
-            if 'mysql' in app.config['SQLALCHEMY_DATABASE_URI']:
-                print("Switching to SQLite database fallback (freelancehub.db)...")
-                app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///freelancehub.db'
-                db.engine.dispose()
-                db.init_app(app)
-                db.create_all()
-                seed_database()
+            print(f"Database initialization error: {e}")
 
     return app
